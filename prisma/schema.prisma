@@ -1,0 +1,58 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  fullName         String   @map("full_name")
+  password         String
+  role             Role     @default(TRAINEE)
+  selectedAvatarId Int?     @unique @map("selected_avatar_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  selectedAvatar UserAvatar?  @relation("selected_avatar", fields: [selectedAvatarId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  avatars        UserAvatar[]
+
+  @@map("users")
+}
+
+model UserAvatar {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  mediaId   Int      @map("media_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  media       Media @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  avatarsUser User? @relation("selected_avatar")
+
+  @@map("users_avatars")
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  name      String
+  mimeType  String   @map("mime_type")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  avatars UserAvatar[]
+
+  @@map("medias")
+}
+
+enum Role {
+  TRAINEE
+  COACH
+  ADMIN
+}
